@@ -1,0 +1,53 @@
+--- a/api.c	2014-08-10 22:25:02.268824217 +0000
++++ b/api.c	2014-08-10 22:52:03.276817037 +0000
+@@ -2539,13 +2539,14 @@ static void poolstatus(struct io_data *i
+ 		root = api_add_uint(root, "Getworks", &(pool->getwork_requested), false);
+ 		root = api_add_int64(root, "Accepted", &(pool->accepted), false);
+ 		root = api_add_int64(root, "Rejected", &(pool->rejected), false);
+-		root = api_add_int(root, "Works", &pool->works, false);
++		//root = api_add_int(root, "Works", &pool->works, false);
+ 		root = api_add_uint(root, "Discarded", &(pool->discarded_work), false);
+ 		root = api_add_uint(root, "Stale", &(pool->stale_shares), false);
+ 		root = api_add_uint(root, "Get Failures", &(pool->getfail_occasions), false);
+ 		root = api_add_uint(root, "Remote Failures", &(pool->remotefail_occasions), false);
+ 		root = api_add_escape(root, "User", pool->rpc_user, false);
+ 		root = api_add_time(root, "Last Share Time", &(pool->last_share_time), false);
++		root = api_add_string(root, "Diff", pool->diff, false);
+ 		root = api_add_int64(root, "Diff1 Shares", &(pool->diff1), false);
+ 		if (pool->rpc_proxy) {
+ 			root = api_add_const(root, "Proxy Type", proxytype(pool->rpc_proxytype), false);
+@@ -2584,7 +2585,7 @@ static void summary(struct io_data *io_d
+ {
+ 	struct api_data *root = NULL;
+ 	bool io_open;
+-	double utility, mhs, work_utility;
++	double utility, mhs, work_utility, ghs, total_rolling_ghs;
+ 
+ 	message(io_data, MSG_SUMM, 0, NULL, isjson);
+ 	io_open = io_add(io_data, isjson ? COMSTR JSON_SUMMARY : _SUMMARY COMSTR);
+@@ -2594,16 +2595,19 @@ static void summary(struct io_data *io_d
+ 
+ 	utility = total_accepted / ( total_secs ? total_secs : 1 ) * 60;
+ 	mhs = total_mhashes_done / total_secs;
++	ghs = total_mhashes_done / 1000 / total_secs;
++	total_rolling_ghs = total_rolling / 1000;
++
+ 	work_utility = total_diff1 / ( total_secs ? total_secs : 1 ) * 60;
+ 
+ 	root = api_add_elapsed(root, "Elapsed", &(total_secs), true);
+-	root = api_add_mhs(root, "MHS av", &(mhs), false);
+ 	char mhsname[27];
+-	sprintf(mhsname, "MHS %ds", opt_log_interval);
+-	root = api_add_mhs(root, mhsname, &(total_rolling), false);
+-	root = api_add_mhs(root, "MHS 1m", &rolling1, false);
+-	root = api_add_mhs(root, "MHS 5m", &rolling5, false);
+-	root = api_add_mhs(root, "MHS 15m", &rolling15, false);
++	sprintf(mhsname, "GHS %ds", opt_log_interval);
++	root = api_add_mhs(root, mhsname, &(total_rolling_ghs), false);
++	root = api_add_mhs(root, "GHS av", &(ghs), false);
++//	root = api_add_mhs(root, "MHS 1m", &rolling1, false);
++//	root = api_add_mhs(root, "MHS 5m", &rolling5, false);
++//	root = api_add_mhs(root, "MHS 15m", &rolling15, false);
+ 	root = api_add_uint(root, "Found Blocks", &(found_blocks), true);
+ 	root = api_add_int64(root, "Getworks", &(total_getworks), true);
+ 	root = api_add_int64(root, "Accepted", &(total_accepted), true);
